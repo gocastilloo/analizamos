@@ -1,0 +1,26 @@
+Reglas de negocio
+
+1. Subir un pdf
+    Detectar de que tipo de banco viene para que asi pueda clasificarlo
+    Si no detecta el banco, guardarlo en otra tabla para futuros analisis
+
+2. Al recibir el pdf
+    El sistema debe detectar la informacion relevante como fecha, concepto y monto
+    Detectar ingresos y egresos
+    La respuesta puede ser un diccionario de objetos
+    Ingresos:
+        Detectar fuente principal
+        Compararlo con meses anteriores
+
+
+    Egresos:
+        Detectar los gastos hormiga
+        Sugerir gastos innecesarios
+        Clasificar las compras
+        Grafica de gastos a traves del mes
+        
+    
+
+3. Manejo de usuarios
+    Guardar informacion del usuario y relacionarlo con la tabla de pdf's
+    Si un usuario anonimo sube un estado de cuenta, guardar la IP address
