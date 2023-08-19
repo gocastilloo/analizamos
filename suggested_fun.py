@@ -67,18 +67,55 @@ def convert_pdf_to_image(file_path):
         binary_images.append(binary_image)
     return binary_images
 
+bank_patterns = {
+    'Nu Bank': [r'Nu\s*México\s*Financiera'],
+    'Santander': [r'Santander', r'SUPERLINEA'],
+}
+
+def identify_bank(text):
+    for bank, patterns in bank_patterns.items():
+        if any(re.search(pattern, text) for pattern in patterns):
+            return bank
+    return None
+
+
+select_pattern = {
+    'Nu Bank': r'(\d{1,2} [A-Z]{3})\s+(.*?)\s+\$\s*([\d,]+\.\d{2})',
+    'Santander': r'(\b(?!00\b)(?:0[1-9]|1\d|2[0-9]|3[01])\s?[A-Z]{3}\b) (.*?) (\b\d{1,3}(?:,\d{3})*\.\d{2}\b)',
+}
+
 def extract_data_from_image(images):
+    identified_bank = None
     data_list = []
+
     for binary_image in images:
-        text = pytesseract.image_to_string(binary_image, lang='eng', config='--psm 4')
-        pattern = r'(\b(?!00\b)(?:0[1-9]|1\d|2[0-9]|3[01])\s?[A-Z]{3}\b) (.*?) (\b\d{1,3}(?:,\d{3})*\.\d{2}\b)'
+        text = pytesseract.image_to_string(binary_image, lang='eng', config='--psm 6')
+
+        # Identify the bank only if it has not been identified yet
+        if identified_bank is None:
+            identified_bank = identify_bank(text)
+            if identified_bank is not None:
+                print(f"Bank identified: {identified_bank}")
+                #data_list.append({'Bank': identified_bank})
+            else:
+                print("Bank not identified")
+                continue
+
+        bank_match_pattern = select_pattern.get(identified_bank)
+        if bank_match_pattern is None:
+            print(f"No pattern found for bank: {identified_bank}")
+            continue
+
+        # Compile the pattern
+        pattern = re.compile(bank_match_pattern)
         matches = re.findall(pattern, text)
         for date, concept, amount in matches:
             if concept.endswith('° '):
                 continue
             else:
                 data_list.append({'fecha': date, 'concepto': concept, 'monto': float(amount.replace(',', ''))})
-    return data_list
+    
+    return identified_bank, data_list
 
 def create_dataframe(data_list):
     df = pd.DataFrame(data_list)
